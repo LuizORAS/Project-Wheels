@@ -1,3 +1,5 @@
+package Wheels;
+
 public enum BikeType {
     BASIC(0.40),
     COMFORT(0.80),
