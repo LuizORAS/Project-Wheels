@@ -58,5 +58,6 @@ public class Payment {
 
     public User getUser() {
         return user;
+        system.out.println("User: " + user.getName() + " (Plan: " + user.getSubscriptionPlan() + ")");
     }
 }
