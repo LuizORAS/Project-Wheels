@@ -1,33 +1,62 @@
-//ARQUIVO: Payment.java
 package Wheels;
 
+import Wheels.User.Plan;
+
 public class Payment {
-    //set up the member variables
-    private Customer customer = null;
-    private int paymentId = 0;
+    // Member variables
+    private User user;
+    private int paymentId;
 
-    private static int paymentCount = 001;
+    // Static counter for generating unique payment IDs
+    private static int paymentCount = 1;
 
-    public Payment(Customer cust){
-        //set the member variables
-
-        customer = cust;
-        paymentId = paymentCount++;
+    // Constructor
+    public Payment(User user) {
+        this.user = user;
+        this.paymentId = paymentCount++;
     }
 
-    public void calculateTotalPayment(Hire hire){
-        //call the private method
-        issueReceipt(hire);
+    // Calculate total payment based on the user's subscription plan
+    public void calculateMonthlyPayment() {
+        Plan userPlan = user.getSubscriptionPlan();
+        double monthlyCost = 0;
+
+        switch (userPlan) {
+            case FREE:
+                System.out.println("Free plan: No payment required.");
+                break;
+            case BASIC:
+                monthlyCost = 20.0; // Monthly cost for Basic plan
+                break;
+            case GOLD:
+                monthlyCost = 50.0; // Monthly cost for Gold plan
+                break;
+            case DIAMOND:
+                monthlyCost = 100.0; // Monthly cost for Diamond plan
+                break;
+        }
+
+        if (monthlyCost > 0) {
+            System.out.println("Monthly payment for user '" + user.getName() + "': $" + monthlyCost);
+        }
+
+        issueReceipt(monthlyCost);
     }
 
-    private void issueReceipt(Hire hire){
-        //print out all the relevant details
-        String cust = hire.getCustomer().getName();
-        String pcode = hire.getCustomer().getPostcode();
-        System.out.println("Printing out receipt for '" + cust + "' ......");
-        System.out.println("In postcode: " + pcode + "\n");
+    // Private method to issue a receipt
+    private void issueReceipt(double monthlyCost) {
+        System.out.println("---- Receipt ----");
+        System.out.println("User: " + user.getName() + " (Plan: " + user.getSubscriptionPlan() + ")");
+        System.out.println("Monthly Cost: $" + monthlyCost);
+        System.out.println("-----------------");
+    }
 
-        System.out.println("Hiring bike number '" + hire.getBike().getBikeNumber() + "' for " + hire.getNumberOfDays() + " days" + "\n");
-        hire.getBike().calculateCost(hire.getNumberOfDays());
+    // Getters for Payment ID and User
+    public int getPaymentId() {
+        return paymentId;
+    }
+
+    public User getUser() {
+        return user;
     }
 }
