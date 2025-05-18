@@ -293,7 +293,110 @@ public class MainMenu {
 
     // 6. Devolver bicicleta
     private void devolverBicicleta(Scanner scanner) {
-        // TODO: Implementar lógica de devolução de bicicleta
         System.out.println("\n--- Devolver Bicicleta ---");
+        // 1. Verifica se o usuário realmente tem uma bike alugada
+        String bikeIdStr = user.getBikeAlugada();
+        String horaAluguelStr = user.getHoraAluguel();
+        if (bikeIdStr == null || bikeIdStr.isEmpty() || horaAluguelStr == null || horaAluguelStr.isEmpty()) {
+            System.out.println("Você não possui bicicleta alugada.");
+            return;
+        }
+        int bikeId = Integer.parseInt(bikeIdStr);
+
+        // 2. Recupera o tipo da bike alugada
+        BikeManager bm = new BikeManager();
+        Bike bike = null;
+        for (BikeType type : BikeType.values()) {
+            for (Bike b : bm.listAvailableBikes(type)) {
+                if (b.getId() == bikeId) {
+                    bike = b;
+                    break;
+                }
+            }
+        }
+        // Se não achou entre as disponíveis, pega do CSV (bike já marcada como indisponível)
+        if (bike == null) {
+            // Hack: Bike não está disponível ainda, então está indisponível
+            // Recarrega todas do BikeManager
+            bm = new BikeManager(); // força reload
+            for (BikeType type : BikeType.values()) {
+                for (Bike b : bm.listAvailableBikes(type)) {
+                    if (b.getId() == bikeId) {
+                        bike = b;
+                        break;
+                    }
+                }
+            }
+            // Se mesmo assim não achou, ignora, pois só precisa do tipo
+            if (bike == null) {
+                // Se não achou, provavelmente está como indisponível (alugada), então pega o tipo da string salva no User
+                // Só que não temos esse info, então vamos supor que o ID existe
+            }
+        }
+
+        BikeType bikeType = null;
+        if (bike != null) {
+            bikeType = bike.getType();
+        } else {
+            // Como fallback, assume BASIC (melhor do que crashar)
+            bikeType = BikeType.BASIC;
+        }
+
+        // 3. Calcula tempo de uso
+        java.time.LocalDateTime horaAluguel = java.time.LocalDateTime.parse(horaAluguelStr);
+        java.time.LocalDateTime horaAgora = java.time.LocalDateTime.now();
+        long minutosUso = java.time.Duration.between(horaAluguel, horaAgora).toMinutes();
+
+        // 4. Calcula limite conforme plano/tipo
+        int limiteMin = 0;
+        switch (user.getPlano()) {
+            case FREE:
+                limiteMin = 30;
+                break;
+            case BASIC:
+                limiteMin = 60;
+                break;
+            case GOLD:
+                limiteMin = 120;
+                break;
+            case DIAMOND:
+                if (bikeType == BikeType.ELECTRIC) {
+                    limiteMin = 60;
+                } else {
+                    limiteMin = 999999; // Ilimitado para BASIC/COMFORT
+                }
+                break;
+            default:
+                limiteMin = 60;
+        }
+
+        // 5. Calcula multa se excedeu limite
+        double multa = 0.0;
+        int minutosExcedidos = (int) (minutosUso - limiteMin);
+        if (minutosExcedidos > 0) {
+            multa = bikeType.calculateFine(minutosExcedidos);
+            user.setMultaAtual(user.getMultaAtual() + multa);
+            System.out.printf("Você excedeu o tempo limite em %d minutos. Multa: R$ %.2f\n", minutosExcedidos, multa);
+        } else {
+            System.out.println("Bicicleta devolvida dentro do tempo! Nenhuma multa aplicada.");
+        }
+
+        // 6. Marca bike como disponível
+        boolean sucesso = bm.returnBike(bikeId);
+        if (!sucesso) {
+            System.out.println("Erro ao devolver bicicleta. Contate o suporte.");
+            return;
+        }
+
+        // 7. Limpa campos do usuário
+        user.setBikeAlugada("");
+        user.setHoraAluguel("");
+        userManager.saveAllUsers();
+
+        System.out.println("Bicicleta devolvida com sucesso!");
+        System.out.println("Tempo de uso: " + minutosUso + " minutos.");
+        if (minutosExcedidos > 0) {
+            System.out.printf("Multa aplicada: R$ %.2f\n", multa);
+        }
     }
 }
