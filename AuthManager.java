@@ -1,0 +1,26 @@
+package Wheels;
+
+public class AuthManager {
+    private UserManager userManager;
+
+    public AuthManager(UserManager userManager) {
+        this.userManager = userManager;
+    }
+
+    // Autenticação simples: retorna o usuário autenticado, ou null se falhar
+    public User login(String email, String password) {
+        User u = userManager.getUserByEmail(email);
+        if (u != null && u.getPassword().equals(password)) {
+            return u;
+        }
+        return null;
+    }
+
+    // Cadastro: retorna true se sucesso, false se email já existe
+    public boolean register(String firstName, String lastName, String email, String password) {
+        if (userManager.emailExists(email)) return false;
+        User user = new User(firstName, lastName, email, password);
+        userManager.addUser(user);
+        return true;
+    }
+}
