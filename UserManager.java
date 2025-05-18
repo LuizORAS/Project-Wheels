@@ -62,4 +62,21 @@ public class UserManager {
     public Collection<User> getAllUsers() {
         return usersByEmail.values();
     }
+    public boolean removeUserByEmail(String email) {
+        if (!usersByEmail.containsKey(email)) return false;
+        usersByEmail.remove(email);
+        saveAllUsers();
+        return true;
+    }
+
+    private void saveAllUsers() {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(USERS_CSV))) {
+            pw.println("userID,firstName,lastName,email,password");
+            for (User user : usersByEmail.values()) {
+                pw.printf("%d,%s,%s,%s,%s\n", user.getUserID(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getPassword());
+            }
+        } catch (IOException e) {
+            System.err.println("Erro ao salvar usuários: " + e.getMessage());
+        }
+    }
 }
