@@ -8,7 +8,15 @@ public class UserManager {
     private Map<String, User> usersByEmail = new HashMap<>(); // email -> User
 
     public UserManager() {
+        ensureCsvDirectory();
         loadUsers();
+    }
+
+    private void ensureCsvDirectory() {
+        File dir = new File("csv");
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
     }
 
     public void loadUsers() {
@@ -19,13 +27,21 @@ public class UserManager {
             String line = br.readLine(); // header
             while ((line = br.readLine()) != null) {
                 String[] tokens = line.split(",");
-                if (tokens.length >= 5) {
+                // 12 campos
+                if (tokens.length >= 12) {
                     int id = Integer.parseInt(tokens[0]);
                     String firstName = tokens[1];
                     String lastName = tokens[2];
                     String email = tokens[3];
                     String password = tokens[4];
-                    User u = new User(id, firstName, lastName, email, password);
+                    String plano = tokens[5];
+                    String dataCriacao = tokens[6];
+                    int viagensHoje = Integer.parseInt(tokens[7]);
+                    double multaAtual = Double.parseDouble(tokens[8]);
+                    String proximaCobranca = tokens[9];
+                    String bikeAlugada = tokens[10];
+                    String horaAluguel = tokens[11];
+                    User u = new User(id, firstName, lastName, email, password, plano, dataCriacao, viagensHoje, multaAtual, proximaCobranca, bikeAlugada, horaAluguel);
                     usersByEmail.put(email, u);
                 }
             }
@@ -51,9 +67,22 @@ public class UserManager {
         boolean fileExists = new File(USERS_CSV).exists();
         try (PrintWriter pw = new PrintWriter(new FileWriter(USERS_CSV, true))) {
             if (!fileExists) {
-                pw.println("userID,firstName,lastName,email,password");
+                pw.println("userID,firstName,lastName,email,password,plano,dataCriacao,viagensHoje,multaAtual,proximaCobranca,bikeAlugada,horaAluguel");
             }
-            pw.printf("%d,%s,%s,%s,%s\n", user.getUserID(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getPassword());
+            pw.printf("%d,%s,%s,%s,%s,%s,%s,%d,%.2f,%s,%s,%s%n",
+                    user.getUserID(),
+                    user.getFirstName(),
+                    user.getLastName(),
+                    user.getEmail(),
+                    user.getPassword(),
+                    user.getPlano(),
+                    user.getDataCriacao(),
+                    user.getViagensHoje(),
+                    user.getMultaAtual(),
+                    user.getProximaCobranca(),
+                    user.getBikeAlugada(),
+                    user.getHoraAluguel()
+            );
         } catch (IOException e) {
             System.err.println("Erro ao salvar usuário: " + e.getMessage());
         }
@@ -62,6 +91,7 @@ public class UserManager {
     public Collection<User> getAllUsers() {
         return usersByEmail.values();
     }
+
     public boolean removeUserByEmail(String email) {
         if (!usersByEmail.containsKey(email)) return false;
         usersByEmail.remove(email);
@@ -71,9 +101,22 @@ public class UserManager {
 
     private void saveAllUsers() {
         try (PrintWriter pw = new PrintWriter(new FileWriter(USERS_CSV))) {
-            pw.println("userID,firstName,lastName,email,password");
+            pw.println("userID,firstName,lastName,email,password,plano,dataCriacao,viagensHoje,multaAtual,proximaCobranca,bikeAlugada,horaAluguel");
             for (User user : usersByEmail.values()) {
-                pw.printf("%d,%s,%s,%s,%s\n", user.getUserID(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getPassword());
+                pw.printf("%d,%s,%s,%s,%s,%s,%s,%d,%.2f,%s,%s,%s%n",
+                        user.getUserID(),
+                        user.getFirstName(),
+                        user.getLastName(),
+                        user.getEmail(),
+                        user.getPassword(),
+                        user.getPlano(),
+                        user.getDataCriacao(),
+                        user.getViagensHoje(),
+                        user.getMultaAtual(),
+                        user.getProximaCobranca(),
+                        user.getBikeAlugada(),
+                        user.getHoraAluguel()
+                );
             }
         } catch (IOException e) {
             System.err.println("Erro ao salvar usuários: " + e.getMessage());

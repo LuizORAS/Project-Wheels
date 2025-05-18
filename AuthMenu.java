@@ -1,5 +1,7 @@
 package Wheels;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 // Menu de autenticação (login/cadastro/saída)
@@ -75,8 +77,32 @@ public class AuthMenu {
         System.out.print("Senha: ");
         String senha = scanner.nextLine();
 
-        // Pode adicionar campos default para plano, etc, conforme User.java
-        boolean registrado = authManager.register(nome, sobrenome, email, senha);
+        // Dados adicionais obrigatórios para o funcionamento do sistema
+        String plano = "FREE"; // padrão no cadastro
+        LocalDate dataCriacao = LocalDate.now();
+        String dataCriacaoStr = dataCriacao.format(DateTimeFormatter.ISO_LOCAL_DATE);
+        int viagensHoje = 0;
+        double multaAtual = 0.0;
+        LocalDate proximaCobranca = dataCriacao.plusDays(30);
+        String proximaCobrancaStr = proximaCobranca.format(DateTimeFormatter.ISO_LOCAL_DATE);
+        String bikeAlugada = ""; // nenhuma inicialmente
+        String horaAluguel = "";
+
+        // Registra usuário com todos os campos necessários (ajuste o método se necessário)
+        boolean registrado = authManager.register(
+                nome,
+                sobrenome,
+                email,
+                senha,
+                plano,
+                dataCriacaoStr,
+                viagensHoje,
+                multaAtual,
+                proximaCobrancaStr,
+                bikeAlugada,
+                horaAluguel
+        );
+
         if (registrado) {
             System.out.println("Cadastro realizado com sucesso! Agora faça login.");
         } else {

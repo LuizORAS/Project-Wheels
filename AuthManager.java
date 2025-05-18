@@ -16,10 +16,22 @@ public class AuthManager {
         return null;
     }
 
-    // Cadastro: retorna true se sucesso, false se email já existe
-    public boolean register(String firstName, String lastName, String email, String password) {
+    // Cadastro atualizado: retorna true se sucesso, false se email já existe
+    public boolean register(
+            String firstName,
+            String lastName,
+            String email,
+            String password,
+            String plano,
+            String dataCriacao,
+            int viagensHoje,
+            double multaAtual,
+            String proximaCobranca,
+            String bikeAlugada,
+            String horaAluguel
+    ) {
         if (userManager.emailExists(email)) return false;
-        User user = new User(firstName, lastName, email, password);
+        User user = new User(firstName, lastName, email, password, plano, dataCriacao, viagensHoje, multaAtual, proximaCobranca, bikeAlugada, horaAluguel);
         userManager.addUser(user);
         return true;
     }
