@@ -22,7 +22,7 @@ public class AuthManager {
             String lastName,
             String email,
             String password,
-            String plano,
+            Plan plano,
             String dataCriacao,
             int viagensHoje,
             double multaAtual,

@@ -34,7 +34,7 @@ public class UserManager {
                     String lastName = tokens[2];
                     String email = tokens[3];
                     String password = tokens[4];
-                    String plano = tokens[5];
+                    Plan plano = Plan.valueOf(tokens[5]);
                     String dataCriacao = tokens[6];
                     int viagensHoje = Integer.parseInt(tokens[7]);
                     double multaAtual = Double.parseDouble(tokens[8]);
@@ -75,7 +75,7 @@ public class UserManager {
                     user.getLastName(),
                     user.getEmail(),
                     user.getPassword(),
-                    user.getPlano(),
+                    user.getPlano().name(),
                     user.getDataCriacao(),
                     user.getViagensHoje(),
                     user.getMultaAtual(),
@@ -99,7 +99,7 @@ public class UserManager {
         return true;
     }
 
-    private void saveAllUsers() {
+    public void saveAllUsers() {
         try (PrintWriter pw = new PrintWriter(new FileWriter(USERS_CSV))) {
             pw.println("userID,firstName,lastName,email,password,plano,dataCriacao,viagensHoje,multaAtual,proximaCobranca,bikeAlugada,horaAluguel");
             for (User user : usersByEmail.values()) {

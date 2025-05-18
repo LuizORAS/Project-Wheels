@@ -78,7 +78,7 @@ public class AuthMenu {
         String senha = scanner.nextLine();
 
         // Dados adicionais obrigatórios para o funcionamento do sistema
-        String plano = "FREE"; // padrão no cadastro
+        Plan plano = Plan.FREE; // padrão no cadastro
         LocalDate dataCriacao = LocalDate.now();
         String dataCriacaoStr = dataCriacao.format(DateTimeFormatter.ISO_LOCAL_DATE);
         int viagensHoje = 0;

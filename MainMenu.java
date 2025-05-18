@@ -72,17 +72,17 @@ public class MainMenu {
         System.out.println("Plano: " + user.getPlano());
 
         // Benefícios de cada plano
-        switch (user.getPlano().toUpperCase()) {
-            case "FREE":
+        switch (user.getPlano()) {
+            case FREE:
                 System.out.println("Benefícios: Até 1 aluguel por dia, apenas bikes comuns, limite de 30 min por aluguel, sujeito a multa.");
                 break;
-            case "BASIC":
+            case BASIC:
                 System.out.println("Benefícios: Até 2 aluguéis por dia, acesso a bikes comuns, limite de 1h por aluguel, sujeito a multa.");
                 break;
-            case "GOLD":
+            case GOLD:
                 System.out.println("Benefícios: Até 4 aluguéis por dia, acesso a bikes comuns e comfort, até 2h por aluguel, pode agendar bikes para o dia seguinte, sujeito a multa por atraso.");
                 break;
-            case "DIAMOND":
+            case DIAMOND:
                 System.out.println("Benefícios: Até 6 aluguéis por dia, acesso a bikes comuns, comfort e electric, tempo ilimitado para bikes comuns e comfort, pode usar e-bikes 2 vezes ao dia, limite de 1 hora para e-bike, pode agendar bikes para o dia seguinte, recebe previsão de quando a proxima bike estará disponível, sujeito a multa por atraso de e-bike.");
                 break;
             default:
@@ -93,38 +93,81 @@ public class MainMenu {
 
     // 2. Mudar plano (submenu + integração com Payment e receipt)
     private void mudarPlano(Scanner scanner) {
-        // TODO: Implementar submenu de troca de plano e integração com Payment.java
-        System.out.println("\n--- Mudar de Plano ---");
-        System.out.println("1. Basic");
-        System.out.println("2. Gold");
-        System.out.println("3. Diamond");
-        System.out.println("4. Voltar ao menu principal");
-        System.out.print("Escolha uma opção: ");
-        String op = scanner.nextLine();
-        switch (op) {
-            case "1":
-            case "2":
-            case "3":
-                // Chamar lógica de pagamento e alteração de plano
-                // paymentProcess(op, scanner);
+        System.out.println("\n--- Mudar Plano ---");
+        Plan planoAtual = user.getPlano();
+
+        // Listar os planos disponíveis, exceto o atual
+        System.out.println("Planos disponíveis:");
+        int idx = 1;
+        Plan[] planos = Plan.values();
+        for (Plan p : planos) {
+            if (p != planoAtual) {
+                System.out.println(idx + ". " + p);
+                idx++;
+            }
+        }
+        System.out.println(idx + ". Voltar ao menu anterior");
+
+        int escolha;
+        while (true) {
+            System.out.print("Escolha o novo plano (ou digite o número para voltar): ");
+            String input = scanner.nextLine().trim();
+            try {
+                escolha = Integer.parseInt(input);
+                if (escolha == idx) {
+                    System.out.println("Retornando ao menu principal...");
+                    break;
+                }
+                // Mapeia a escolha ao plano correto (pula o plano atual)
+                int realIdx = 0;
+                for (Plan p : planos) {
+                    if (p == planoAtual) continue;
+                    realIdx++;
+                    if (realIdx == escolha) {
+                        boolean sucesso = Payment.processPlanChange(user, p, scanner);
+                        if (sucesso) {
+                            userManager.saveAllUsers();
+                            System.out.println("Plano alterado com sucesso!");
+                        } else {
+                            System.out.println("Operação cancelada. Plano não alterado.");
+                        }
+                        break;
+                    }
+                }
                 break;
-            case "4":
-                return;
-            default:
+            } catch (NumberFormatException e) {
                 System.out.println("Opção inválida.");
+            }
         }
     }
 
     // 3. Cancelar plano
     private void cancelarPlano(Scanner scanner) {
-        // TODO: Confirmar com usuário e alterar plano para FREE
-        System.out.println("\n--- Cancelar Plano ---");
+        System.out.println("\n--- Cancelamento de Plano ---");
+        if (user.getPlano() == Plan.FREE) {
+            System.out.println("Você já está no plano FREE. Não é possível cancelar.");
+        } else {
+            user.setPlano(Plan.FREE);
+            userManager.saveAllUsers();
+            System.out.println("Seu plano foi cancelado e você voltou para o plano FREE.");
+        }
     }
 
     // 4. Consultar dados do usuário
     private void consultarDadosUsuario() {
-        // TODO: Mostrar todas as informações relevantes do usuário
         System.out.println("\n--- Dados do Usuário ---");
+        System.out.println("ID: " + user.getUserID());
+        System.out.println("Nome: " + user.getFirstName() + " " + user.getLastName());
+        System.out.println("E-mail: " + user.getEmail());
+        System.out.println("Plano: " + user.getPlano());
+        System.out.println("Data de cadastro: " + user.getDataCriacao());
+        System.out.println("Viagens hoje: " + user.getViagensHoje());
+        System.out.println("Multa atual: R$" + String.format("%.2f", user.getMultaAtual()));
+        System.out.println("Próxima cobrança: " + user.getProximaCobranca());
+        System.out.println("Bicicleta alugada: " +
+                (user.getBikeAlugada() == null || user.getBikeAlugada().isEmpty() ? "Nenhuma" : user.getBikeAlugada()));
+        System.out.println("Hora do aluguel: " +
+                (user.getHoraAluguel() == null || user.getHoraAluguel().isEmpty() ? "Nenhuma" : user.getHoraAluguel()));
     }
 
     // 5. Excluir usuário (pede senha duas vezes e remove do CSV)

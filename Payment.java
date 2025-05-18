@@ -1,13 +1,18 @@
 package Wheels;
 
-import Wheels.User.Plan;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.time.LocalDateTime;
+import java.util.Scanner;
 
 public class Payment {
-    // Member variables
+
     private User user;
     private int paymentId;
 
-    // Static counter for generating unique payment IDs
+
     private static int paymentCount = 1;
 
     // Constructor
@@ -16,48 +21,73 @@ public class Payment {
         this.paymentId = paymentCount++;
     }
 
-    // Calculate total payment based on the user's subscription plan
-    public void calculateMonthlyPayment() {
-        Plan userPlan = user.getSubscriptionPlan();
-        double monthlyCost = 0;
+    // (Mantém métodos antigos se desejar, ou remova se não precisar)
 
-        switch (userPlan) {
-            case FREE:
-                System.out.println("Free plan: No payment required.");
+    // Novo método estático para processar troca de plano
+    public static boolean processPlanChange(User user, Plan novoPlano, Scanner scanner) {
+        System.out.println("\n--- Pagamento para troca de plano ---");
+
+        // Solicita e valida número do cartão
+        String card;
+        while (true) {
+            System.out.print("Digite os 16 dígitos do cartão: ");
+            card = scanner.nextLine().replaceAll("\\s+", "");
+            if (card.equalsIgnoreCase("voltar")) return false;
+            if (card.matches("\\d{16}"))
                 break;
-            case BASIC:
-                monthlyCost = 20.0; // Monthly cost for Basic plan
-                break;
-            case GOLD:
-                monthlyCost = 50.0; // Monthly cost for Gold plan
-                break;
-            case DIAMOND:
-                monthlyCost = 100.0; // Monthly cost for Diamond plan
-                break;
+            System.out.println("Cartão inválido! Digite 16 dígitos numéricos ou 'voltar' para retornar.");
         }
 
-        if (monthlyCost > 0) {
-            System.out.println("Monthly payment for user '" + user.getName() + "': $" + monthlyCost);
+        // Solicita e valida data de validade
+        String validade;
+        while (true) {
+            System.out.print("Digite a data de validade (MM/AA): ");
+            validade = scanner.nextLine().trim();
+            if (validade.equalsIgnoreCase("voltar")) return false;
+            if (validade.matches("\\d{2}/\\d{2}"))
+                break;
+            System.out.println("Data de validade inválida! Use o formato MM/AA ou 'voltar' para retornar.");
         }
 
-        issueReceipt(monthlyCost);
+        // Solicita e valida CVC
+        String cvc;
+        while (true) {
+            System.out.print("Digite o CVC (3 dígitos): ");
+            cvc = scanner.nextLine().trim();
+            if (cvc.equalsIgnoreCase("voltar")) return false;
+            if (cvc.matches("\\d{3}"))
+                break;
+            System.out.println("CVC inválido! Digite 3 dígitos numéricos ou 'voltar' para retornar.");
+        }
+
+        // Atualiza o plano do usuário
+        user.setPlano(novoPlano);
+
+        // Gera recibo
+        try {
+            File dir = new File("receipts");
+            if (!dir.exists()) dir.mkdirs();
+            String fileName = "receipts/receipt_" + user.getUserID() + "_" + System.currentTimeMillis() + ".txt";
+            PrintWriter writer = new PrintWriter(new FileWriter(fileName));
+            writer.println("Nome do usuário: " + user.getFirstName() + " " + user.getLastName());
+            writer.println("Plano comprado: " + novoPlano);
+            writer.println("Data da compra: " + LocalDateTime.now());
+            writer.close();
+            System.out.println("Recibo gerado em: " + fileName);
+        } catch (IOException e) {
+            System.out.println("Erro ao gerar recibo: " + e.getMessage());
+        }
+
+        System.out.println("Plano alterado com sucesso para " + novoPlano + "!");
+        return true;
     }
 
-    // Private method to issue a receipt
-    private void issueReceipt(double monthlyCost) {
-        System.out.println("---- Receipt ----");
-        System.out.println("User: " + user.getName() + " (Plan: " + user.getSubscriptionPlan() + ")");
-        System.out.println("Monthly Cost: $" + monthlyCost);
-        System.out.println("-----------------");
-    }
-
-    // Getters for Payment ID and User
+    // Getters for Payment ID and User (mantidos se necessários)
     public int getPaymentId() {
         return paymentId;
     }
 
     public User getUser() {
-        System.out.println("User: " + user.getName() + " (Plan: " + user.getSubscriptionPlan() + ")");
         return user;
     }
 }
