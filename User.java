@@ -15,13 +15,12 @@ public class User {
     private String bikeAlugada;
     private String horaAluguel;
 
-    private static int userCount = 1;
-
+    public User() {}
     // Construtor para novo usuário
     public User(String firstName, String lastName, String email, String password,
                 Plan plano, String dataCriacao, int viagensHoje, double multaAtual,
                 String proximaCobranca, String bikeAlugada, String horaAluguel) {
-        this.userID = userCount++;
+        this.userID = 0;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;

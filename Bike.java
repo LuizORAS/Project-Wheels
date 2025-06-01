@@ -1,10 +1,10 @@
 package Wheels;
 
 public class Bike {
-    private final int id;
-    private final BikeType type;
+    private int id;
+    private BikeType type;
     private boolean available;
-
+    public Bike() {}
     public Bike(int id, BikeType type, boolean available) {
         this.id = id;
         this.type = type;
