@@ -19,15 +19,6 @@ public class ApiClient {
 
     // ---- USERS ----
 
-    public List<User> getAllUsers() throws IOException, InterruptedException {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + "/users"))
-                .GET()
-                .build();
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        return objectMapper.readValue(response.body(), new TypeReference<List<User>>() {});
-    }
-
     public User getUserByEmail(String email) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + "/users/" + email))
@@ -49,17 +40,6 @@ public class ApiClient {
         return response.statusCode() == 200 || response.statusCode() == 201;
     }
 
-    public boolean updateUser(String email, User user) throws IOException, InterruptedException {
-        String json = objectMapper.writeValueAsString(user);
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + "/users/" + email))
-                .header("Content-Type", "application/json")
-                .PUT(HttpRequest.BodyPublishers.ofString(json))
-                .build();
-        HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
-        return response.statusCode() == 200 || response.statusCode() == 204;
-    }
-
     public boolean deleteUser(String email) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + "/users/" + email))
@@ -67,16 +47,6 @@ public class ApiClient {
                 .build();
         HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
         return response.statusCode() == 200 || response.statusCode() == 204;
-    }
-
-    public Plan getUserPlan(String email) throws IOException, InterruptedException {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + "/users/" + email + "/plan"))
-                .GET()
-                .build();
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() == 404) return null;
-        return objectMapper.readValue(response.body(), Plan.class);
     }
 
     public boolean changeUserPlan(String email, Plan newPlan) throws IOException, InterruptedException {
@@ -120,7 +90,6 @@ public class ApiClient {
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         return objectMapper.readValue(response.body(), new TypeReference<List<Bike>>() {});
     }
-
     public List<Bike> getAvailableBikes(BikeType type) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + "/bikes/available?type=" + type.name()))
@@ -129,17 +98,6 @@ public class ApiClient {
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         return objectMapper.readValue(response.body(), new TypeReference<List<Bike>>() {});
     }
-
-    public Bike getBikeById(int id) throws IOException, InterruptedException {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + "/bikes/" + id))
-                .GET()
-                .build();
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() == 404) return null;
-        return objectMapper.readValue(response.body(), Bike.class);
-    }
-
     public boolean rentBike(int bikeId, String userEmail) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + "/bikes/" + bikeId + "/rent?userEmail=" + userEmail))
@@ -148,7 +106,6 @@ public class ApiClient {
         HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
         return response.statusCode() == 200 || response.statusCode() == 204;
     }
-
     public boolean returnBike(int bikeId, String userEmail) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + "/bikes/" + bikeId + "/return?userEmail=" + userEmail))
