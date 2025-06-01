@@ -1,20 +1,16 @@
 package Wheels;
 
-import java.util.Scanner;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class MainMenu {
-    private final User user;
-    private final UserManager userManager;
-    private final AuthManager authManager;
+    private final ApiClient apiClient;
+    private User user;
 
-    public MainMenu(User user, UserManager userManager, AuthManager authManager) {
+    public MainMenu(ApiClient apiClient, User user) {
+        this.apiClient = apiClient;
         this.user = user;
-        this.userManager = userManager;
-        this.authManager = authManager;
     }
 
     public void show() {
@@ -37,45 +33,47 @@ public class MainMenu {
             System.out.print("Escolha uma opção: ");
             String choice = scanner.nextLine();
 
-            switch (choice) {
-                case "1":
-                    consultarPlanoAtual();
-                    break;
-                case "2":
-                    mudarPlano(scanner);
-                    break;
-                case "3":
-                    cancelarPlano(scanner);
-                    break;
-                case "4":
-                    consultarDadosUsuario();
-                    break;
-                case "5":
-                    excluirUsuario(scanner);
-                    break;
-                case "6":
-                    if (user.getBikeAlugada() == null || user.getBikeAlugada().isEmpty()) {
-                        alugarBicicleta(scanner);
-                    } else {
-                        devolverBicicleta(scanner);
-                    }
-                    break;
-                case "7":
-                    System.out.println("Saindo do sistema...");
-                    return;
-                default:
-                    System.out.println("Opção inválida, tente novamente.");
+            try {
+                switch (choice) {
+                    case "1":
+                        consultarPlanoAtual();
+                        break;
+                    case "2":
+                        mudarPlano(scanner);
+                        break;
+                    case "3":
+                        cancelarPlano();
+                        break;
+                    case "4":
+                        consultarDadosUsuario();
+                        break;
+                    case "5":
+                        excluirUsuario(scanner);
+                        return;
+                    case "6":
+                        if (user.getBikeAlugada() == null || user.getBikeAlugada().isEmpty()) {
+                            alugarBicicleta(scanner);
+                        } else {
+                            devolverBicicleta(scanner);
+                        }
+                        break;
+                    case "7":
+                        System.out.println("Saindo do sistema...");
+                        return;
+                    default:
+                        System.out.println("Opção inválida, tente novamente.");
+                }
+            } catch (Exception e) {
+                System.out.println("Erro: " + e.getMessage());
             }
         }
     }
 
     // 1. Consultar plano atual
     private void consultarPlanoAtual() {
-        // TODO: Implementar consulta do plano, mostrar nome, benefícios e data de cadastro
         System.out.println("\n--- Consulta de Plano Atual ---");
         System.out.println("Plano: " + user.getPlano());
 
-        // Benefícios de cada plano
         switch (user.getPlano()) {
             case FREE:
                 System.out.println("Benefícios: Até 1 aluguel por dia, apenas bikes comuns, limite de 30 min por aluguel, sujeito a multa.");
@@ -87,7 +85,7 @@ public class MainMenu {
                 System.out.println("Benefícios: Até 4 aluguéis por dia, acesso a bikes comuns e comfort, até 2h por aluguel, pode agendar bikes para o dia seguinte, sujeito a multa por atraso.");
                 break;
             case DIAMOND:
-                System.out.println("Benefícios: Até 6 aluguéis por dia, acesso a bikes comuns, comfort e electric, tempo ilimitado para bikes comuns e comfort, pode usar e-bikes 2 vezes ao dia, limite de 1 hora para e-bike, pode agendar bikes para o dia seguinte, recebe previsão de quando a proxima bike estará disponível, sujeito a multa por atraso de e-bike.");
+                System.out.println("Benefícios: Até 6 aluguéis por dia, acesso a bikes comuns, comfort e electric, tempo ilimitado para bikes comuns e comfort, pode usar e-bikes 2 vezes ao dia, limite de 1 hora para e-bike, pode agendar bikes para o dia seguinte, recebe previsão de quando a próxima bike estará disponível, sujeito a multa por atraso de e-bike.");
                 break;
             default:
                 System.out.println("Benefícios: Plano desconhecido.");
@@ -95,18 +93,19 @@ public class MainMenu {
         System.out.println("Data de cadastro: " + user.getDataCriacao());
     }
 
-    // 2. Mudar plano (submenu + integração com Payment e receipt)
-    private void mudarPlano(Scanner scanner) {
+    // 2. Mudar plano
+    private void mudarPlano(Scanner scanner) throws Exception {
         System.out.println("\n--- Mudar Plano ---");
         Plan planoAtual = user.getPlano();
 
-        // Listar os planos disponíveis, exceto o atual
         System.out.println("Planos disponíveis:");
         int idx = 1;
         Plan[] planos = Plan.values();
+        Map<Integer, Plan> opcoes = new HashMap<>();
         for (Plan p : planos) {
             if (p != planoAtual) {
                 System.out.println(idx + ". " + p);
+                opcoes.put(idx, p);
                 idx++;
             }
         }
@@ -120,25 +119,22 @@ public class MainMenu {
                 escolha = Integer.parseInt(input);
                 if (escolha == idx) {
                     System.out.println("Retornando ao menu principal...");
-                    break;
+                    return;
                 }
-                // Mapeia a escolha ao plano correto (pula o plano atual)
-                int realIdx = 0;
-                for (Plan p : planos) {
-                    if (p == planoAtual) continue;
-                    realIdx++;
-                    if (realIdx == escolha) {
-                        boolean sucesso = Payment.processPlanChange(user, p, scanner);
-                        if (sucesso) {
-                            userManager.saveAllUsers();
-                            System.out.println("Plano alterado com sucesso!");
-                        } else {
-                            System.out.println("Operação cancelada. Plano não alterado.");
-                        }
-                        break;
-                    }
+                if (!opcoes.containsKey(escolha)) {
+                    System.out.println("Opção inválida.");
+                    continue;
                 }
-                break;
+                Plan novoPlano = opcoes.get(escolha);
+
+                boolean sucesso = Payment.processPlanChange(apiClient, user, novoPlano, scanner);
+                if (sucesso) {
+                    // Atualiza o usuário localmente, caso a API tenha alterado mais algum campo
+                    user = apiClient.getUserByEmail(user.getEmail());
+                } else {
+                    System.out.println("Operação cancelada ou erro no pagamento.");
+                }
+                return;
             } catch (NumberFormatException e) {
                 System.out.println("Opção inválida.");
             }
@@ -146,14 +142,18 @@ public class MainMenu {
     }
 
     // 3. Cancelar plano
-    private void cancelarPlano(Scanner scanner) {
+    private void cancelarPlano() throws Exception {
         System.out.println("\n--- Cancelamento de Plano ---");
         if (user.getPlano() == Plan.FREE) {
             System.out.println("Você já está no plano FREE. Não é possível cancelar.");
         } else {
-            user.setPlano(Plan.FREE);
-            userManager.saveAllUsers();
-            System.out.println("Seu plano foi cancelado e você voltou para o plano FREE.");
+            boolean sucesso = apiClient.cancelUserPlan(user.getEmail());
+            if (sucesso) {
+                user.setPlano(Plan.FREE);
+                System.out.println("Seu plano foi cancelado e você voltou para o plano FREE.");
+            } else {
+                System.out.println("Erro ao cancelar plano.");
+            }
         }
     }
 
@@ -166,42 +166,33 @@ public class MainMenu {
         System.out.println("Plano: " + user.getPlano());
         System.out.println("Data de cadastro: " + user.getDataCriacao());
         System.out.println("Viagens hoje: " + user.getViagensHoje());
-        System.out.println("Multa atual: R$" + String.format("%.2f", user.getMultaAtual()));
+        System.out.println("Multa atual: " + user.getMultaAtual());
         System.out.println("Próxima cobrança: " + user.getProximaCobranca());
-        System.out.println("Bicicleta alugada: " +
-                (user.getBikeAlugada() == null || user.getBikeAlugada().isEmpty() ? "Nenhuma" : user.getBikeAlugada()));
-        System.out.println("Hora do aluguel: " +
-                (user.getHoraAluguel() == null || user.getHoraAluguel().isEmpty() ? "Nenhuma" : user.getHoraAluguel()));
+        if (user.getBikeAlugada() != null && !user.getBikeAlugada().isEmpty()) {
+            System.out.println("Bicicleta alugada: " + user.getBikeAlugada());
+            System.out.println("Hora do aluguel: " + user.getHoraAluguel());
+        }
     }
 
-    // 5. Excluir usuário (pede senha duas vezes e remove do CSV)
-    private void excluirUsuario(Scanner scanner) {
+    // 5. Excluir usuário
+    private void excluirUsuario(Scanner scanner) throws Exception {
         System.out.println("\n--- Excluir Usuário ---");
-        System.out.print("Digite sua senha: ");
-        String senha1 = scanner.nextLine();
-        System.out.print("Confirme sua senha: ");
-        String senha2 = scanner.nextLine();
-
-        if (!senha1.equals(senha2)) {
-            System.out.println("As senhas não coincidem. Operação cancelada.");
-            return;
-        }
-        if (!user.getPassword().equals(senha1)) {
-            System.out.println("Senha incorreta. Operação cancelada.");
-            return;
-        }
-
-        boolean removido = userManager.removeUserByEmail(user.getEmail());
-        if (removido) {
-            System.out.println("Usuário excluído com sucesso! Encerrando sessão...");
-            System.exit(0);
+        System.out.print("Tem certeza? Digite 'SIM' para confirmar: ");
+        String confirm = scanner.nextLine().trim();
+        if ("SIM".equalsIgnoreCase(confirm)) {
+            boolean sucesso = apiClient.deleteUser(user.getEmail());
+            if (sucesso) {
+                System.out.println("Usuário excluído com sucesso.");
+            } else {
+                System.out.println("Erro ao excluir usuário.");
+            }
         } else {
-            System.out.println("Erro ao excluir usuário.");
+            System.out.println("Operação cancelada.");
         }
     }
 
     // 6. Alugar bicicleta
-    private void alugarBicicleta(Scanner scanner) {
+    private void alugarBicicleta(Scanner scanner) throws Exception {
         System.out.println("\n--- Alugar Bicicleta ---");
 
         // 1. Verifica limite do plano
@@ -236,21 +227,20 @@ public class MainMenu {
                 break;
         }
 
-        // 3. Instancia BikeManager e mostra quantidade disponível de cada tipo permitido
-        BikeManager bm = new BikeManager();
+        // 3. Mostra quantidade disponível de cada tipo permitido
         int idx = 1;
         Map<Integer, BikeType> opcoes = new HashMap<>();
         System.out.println("Tipos de bicicleta disponíveis para seu plano:");
         for (BikeType tipo : permitidos) {
-            int disponiveis = bm.listAvailableBikes(tipo).size();
-            System.out.println(idx + ". " + tipo + " (disponíveis: " + disponiveis + ")");
+            List<Bike> disponiveis = apiClient.getAvailableBikes(tipo);
+            System.out.println(idx + ". " + tipo + " (disponíveis: " + disponiveis.size() + ")");
             opcoes.put(idx, tipo);
             idx++;
         }
         System.out.println(idx + ". Voltar ao menu anterior");
 
         // 4. Solicita escolha do tipo de bike
-        int escolhaTipo = -1;
+        int escolhaTipo;
         while (true) {
             System.out.print("Escolha o tipo de bicicleta para alugar: ");
             String opt = scanner.nextLine();
@@ -265,25 +255,24 @@ public class MainMenu {
                     continue;
                 }
                 BikeType tipoEscolhido = opcoes.get(escolhaTipo);
-                List<Bike> disponiveis = bm.listAvailableBikes(tipoEscolhido);
+                List<Bike> disponiveis = apiClient.getAvailableBikes(tipoEscolhido);
+
                 if (disponiveis.isEmpty()) {
                     System.out.println("Não há bicicletas desse tipo disponíveis. Escolha outro tipo.");
                     continue;
                 }
                 // 5. Realiza aluguel
-                Bike bike = bm.rentBike(tipoEscolhido);
-                if (bike == null) {
+                System.out.print("Digite o ID da bike que deseja alugar: ");
+                int idEscolhido = Integer.parseInt(scanner.nextLine());
+                boolean sucesso = apiClient.rentBike(idEscolhido, user.getEmail());
+                if (sucesso) {
+                    // Atualiza dados do usuário localmente pegando o mais recente
+                    user = apiClient.getUserByEmail(user.getEmail());
+                    System.out.println("Bicicleta alugada com sucesso! ID: " + idEscolhido + " (" + tipoEscolhido + ")");
+                    System.out.println("Lembre-se de devolver a bicicleta pelo menu principal.");
+                } else {
                     System.out.println("Não foi possível alugar a bicicleta. Tente novamente.");
-                    return;
                 }
-                // Atualiza estado do usuário
-                user.setBikeAlugada(String.valueOf(bike.getId()));
-                user.setHoraAluguel(java.time.LocalDateTime.now().toString());
-                user.setViagensHoje(user.getViagensHoje() + 1);
-                userManager.saveAllUsers();
-                System.out.println("Bicicleta alugada com sucesso! ID: " + bike.getId() + " (" + bike.getType() + ")");
-                System.out.println("Lembre-se de devolver a bicicleta pelo menu principal.");
-                // Regras de devolução específicas podem ser exibidas aqui
                 return;
             } catch (NumberFormatException e) {
                 System.out.println("Opção inválida!");
@@ -292,111 +281,25 @@ public class MainMenu {
     }
 
     // 6. Devolver bicicleta
-    private void devolverBicicleta(Scanner scanner) {
+    private void devolverBicicleta(Scanner scanner) throws Exception {
         System.out.println("\n--- Devolver Bicicleta ---");
-        // 1. Verifica se o usuário realmente tem uma bike alugada
         String bikeIdStr = user.getBikeAlugada();
-        String horaAluguelStr = user.getHoraAluguel();
-        if (bikeIdStr == null || bikeIdStr.isEmpty() || horaAluguelStr == null || horaAluguelStr.isEmpty()) {
+        if (bikeIdStr == null || bikeIdStr.isEmpty()) {
             System.out.println("Você não possui bicicleta alugada.");
             return;
         }
         int bikeId = Integer.parseInt(bikeIdStr);
 
-        // 2. Recupera o tipo da bike alugada
-        BikeManager bm = new BikeManager();
-        Bike bike = null;
-        for (BikeType type : BikeType.values()) {
-            for (Bike b : bm.listAvailableBikes(type)) {
-                if (b.getId() == bikeId) {
-                    bike = b;
-                    break;
-                }
+        boolean sucesso = apiClient.returnBike(bikeId, user.getEmail());
+        if (sucesso) {
+            // Atualiza dados do usuário localmente pegando o mais recente
+            user = apiClient.getUserByEmail(user.getEmail());
+            System.out.println("Bicicleta devolvida com sucesso!");
+            if (user.getMultaAtual() > 0) {
+                System.out.printf("Atenção: Você possui multa acumulada de R$ %.2f\n", user.getMultaAtual());
             }
-        }
-        // Se não achou entre as disponíveis, pega do CSV (bike já marcada como indisponível)
-        if (bike == null) {
-            // Hack: Bike não está disponível ainda, então está indisponível
-            // Recarrega todas do BikeManager
-            bm = new BikeManager(); // força reload
-            for (BikeType type : BikeType.values()) {
-                for (Bike b : bm.listAvailableBikes(type)) {
-                    if (b.getId() == bikeId) {
-                        bike = b;
-                        break;
-                    }
-                }
-            }
-            // Se mesmo assim não achou, ignora, pois só precisa do tipo
-            if (bike == null) {
-                // Se não achou, provavelmente está como indisponível (alugada), então pega o tipo da string salva no User
-                // Só que não temos esse info, então vamos supor que o ID existe
-            }
-        }
-
-        BikeType bikeType = null;
-        if (bike != null) {
-            bikeType = bike.getType();
         } else {
-            // Como fallback, assume BASIC (melhor do que crashar)
-            bikeType = BikeType.BASIC;
-        }
-
-        // 3. Calcula tempo de uso
-        java.time.LocalDateTime horaAluguel = java.time.LocalDateTime.parse(horaAluguelStr);
-        java.time.LocalDateTime horaAgora = java.time.LocalDateTime.now();
-        long minutosUso = java.time.Duration.between(horaAluguel, horaAgora).toMinutes();
-
-        // 4. Calcula limite conforme plano/tipo
-        int limiteMin = 0;
-        switch (user.getPlano()) {
-            case FREE:
-                limiteMin = 30;
-                break;
-            case BASIC:
-                limiteMin = 60;
-                break;
-            case GOLD:
-                limiteMin = 120;
-                break;
-            case DIAMOND:
-                if (bikeType == BikeType.ELECTRIC) {
-                    limiteMin = 60;
-                } else {
-                    limiteMin = 999999; // Ilimitado para BASIC/COMFORT
-                }
-                break;
-            default:
-                limiteMin = 60;
-        }
-
-        // 5. Calcula multa se excedeu limite
-        double multa = 0.0;
-        int minutosExcedidos = (int) (minutosUso - limiteMin);
-        if (minutosExcedidos > 0) {
-            multa = bikeType.calculateFine(minutosExcedidos);
-            user.setMultaAtual(user.getMultaAtual() + multa);
-            System.out.printf("Você excedeu o tempo limite em %d minutos. Multa: R$ %.2f\n", minutosExcedidos, multa);
-        } else {
-            System.out.println("Bicicleta devolvida dentro do tempo! Nenhuma multa aplicada.");
-        }
-
-        // 6. Marca bike como disponível
-        boolean sucesso = bm.returnBike(bikeId);
-        if (!sucesso) {
-            System.out.println("Erro ao devolver bicicleta. Contate o suporte.");
-            return;
-        }
-
-        // 7. Limpa campos do usuário
-        user.setBikeAlugada("");
-        user.setHoraAluguel("");
-        userManager.saveAllUsers();
-
-        System.out.println("Bicicleta devolvida com sucesso!");
-        System.out.println("Tempo de uso: " + minutosUso + " minutos.");
-        if (minutosExcedidos > 0) {
-            System.out.printf("Multa aplicada: R$ %.2f\n", multa);
+            System.out.println("Erro ao devolver bicicleta.");
         }
     }
 }

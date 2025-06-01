@@ -7,24 +7,31 @@ import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.Scanner;
 
+/**
+ * Payment process for plan changes and receipt generation.
+ * Agora, integra com a API REST via ApiClient na troca de plano!
+ */
 public class Payment {
 
     private User user;
     private int paymentId;
-
-
     private static int paymentCount = 1;
 
-    // Constructor
+    // Constructor (mantido para compatibilidade, se necessário)
     public Payment(User user) {
         this.user = user;
         this.paymentId = paymentCount++;
     }
 
-    // (Mantém métodos antigos se desejar, ou remova se não precisar)
-
-    // Novo método estático para processar troca de plano
-    public static boolean processPlanChange(User user, Plan novoPlano, Scanner scanner) {
+    /**
+     * Processa um pagamento de troca de plano:
+     * - Solicita dados do cartão
+     * - Realiza o pagamento (simulado)
+     * - Troca o plano via ApiClient
+     * - Gera recibo local
+     * Retorna true se sucesso, false se cancelado.
+     */
+    public static boolean processPlanChange(ApiClient apiClient, User user, Plan novoPlano, Scanner scanner) {
         System.out.println("\n--- Pagamento para troca de plano ---");
 
         // Solicita e valida número do cartão
@@ -60,10 +67,20 @@ public class Payment {
             System.out.println("CVC inválido! Digite 3 dígitos numéricos ou 'voltar' para retornar.");
         }
 
-        // Atualiza o plano do usuário
+        // Faz a troca de plano via ApiClient
+        boolean sucessoAPI = false;
+        try {
+            sucessoAPI = apiClient.changeUserPlan(user.getEmail(), novoPlano);
+        } catch (Exception e) {
+            System.out.println("Erro ao trocar plano na API: " + e.getMessage());
+        }
+        if (!sucessoAPI) {
+            System.out.println("Não foi possível alterar o plano na API. Operação cancelada.");
+            return false;
+        }
         user.setPlano(novoPlano);
 
-        // Gera recibo
+        // Gera recibo local
         try {
             File dir = new File("receipts");
             if (!dir.exists()) dir.mkdirs();
@@ -82,11 +99,10 @@ public class Payment {
         return true;
     }
 
-    // Getters for Payment ID and User (mantidos se necessários)
+    // Getters para Payment ID e User (mantidos se necessários)
     public int getPaymentId() {
         return paymentId;
     }
-
     public User getUser() {
         return user;
     }

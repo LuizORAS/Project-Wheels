@@ -4,14 +4,11 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
-// Menu de autenticação (login/cadastro/saída)
 public class AuthMenu {
-    private final UserManager userManager;
-    private final AuthManager authManager;
+    private final ApiClient apiClient;
 
-    public AuthMenu(UserManager userManager, AuthManager authManager) {
-        this.userManager = userManager;
-        this.authManager = authManager;
+    public AuthMenu(ApiClient apiClient) {
+        this.apiClient = apiClient;
     }
 
     public void show() {
@@ -29,8 +26,7 @@ public class AuthMenu {
                 case "1":
                     User user = login(scanner);
                     if (user != null) {
-                        // Após login bem-sucedido, vai para o menu principal
-                        MainMenu mainMenu = new MainMenu(user, userManager, authManager);
+                        MainMenu mainMenu = new MainMenu(apiClient, user);
                         mainMenu.show();
                     }
                     break;
@@ -52,13 +48,19 @@ public class AuthMenu {
         System.out.print("Senha: ");
         String senha = scanner.nextLine();
 
-        User user = authManager.login(email, senha);
-        if (user == null) {
-            System.out.println("Login ou senha incorretos. Tente novamente.");
+        try {
+            User user = apiClient.getUserByEmail(email);
+            if (user != null && user.getPassword().equals(senha)) {
+                System.out.println("Login realizado com sucesso!");
+                return user;
+            } else {
+                System.out.println("Login ou senha incorretos. Tente novamente.");
+                return null;
+            }
+        } catch (Exception e) {
+            System.out.println("Erro ao tentar logar: " + e.getMessage());
             return null;
         }
-        System.out.println("Login realizado com sucesso!");
-        return user;
     }
 
     private void cadastro(Scanner scanner) {
@@ -69,44 +71,40 @@ public class AuthMenu {
         System.out.print("Login (e-mail): ");
         String email = scanner.nextLine().trim();
 
-        if (userManager.emailExists(email)) {
-            System.out.println("Já existe um usuário com esse e-mail. Tente outro.");
-            return;
+        try {
+            if (apiClient.getUserByEmail(email) != null) {
+                System.out.println("Já existe um usuário com esse e-mail. Tente outro.");
+                return;
+            }
+        } catch (Exception e) {
+            // Se for erro 404, não encontrou, pode prosseguir
         }
 
         System.out.print("Senha: ");
         String senha = scanner.nextLine();
 
-        // Dados adicionais obrigatórios para o funcionamento do sistema
-        Plan plano = Plan.FREE; // padrão no cadastro
+        // Dados obrigatórios
+        Plan plano = Plan.FREE;
         LocalDate dataCriacao = LocalDate.now();
         String dataCriacaoStr = dataCriacao.format(DateTimeFormatter.ISO_LOCAL_DATE);
         int viagensHoje = 0;
         double multaAtual = 0.0;
         LocalDate proximaCobranca = dataCriacao.plusDays(30);
         String proximaCobrancaStr = proximaCobranca.format(DateTimeFormatter.ISO_LOCAL_DATE);
-        String bikeAlugada = ""; // nenhuma inicialmente
+        String bikeAlugada = "";
         String horaAluguel = "";
 
-        // Registra usuário com todos os campos necessários (ajuste o método se necessário)
-        boolean registrado = authManager.register(
-                nome,
-                sobrenome,
-                email,
-                senha,
-                plano,
-                dataCriacaoStr,
-                viagensHoje,
-                multaAtual,
-                proximaCobrancaStr,
-                bikeAlugada,
-                horaAluguel
-        );
+        User novoUser = new User(0, nome, sobrenome, email, senha, plano, dataCriacaoStr, viagensHoje, multaAtual, proximaCobrancaStr, bikeAlugada, horaAluguel);
 
-        if (registrado) {
-            System.out.println("Cadastro realizado com sucesso! Agora faça login.");
-        } else {
-            System.out.println("Erro ao cadastrar usuário. Tente novamente.");
+        try {
+            boolean registrado = apiClient.createUser(novoUser);
+            if (registrado) {
+                System.out.println("Cadastro realizado com sucesso! Agora faça login.");
+            } else {
+                System.out.println("Erro ao cadastrar usuário. Tente novamente.");
+            }
+        } catch (Exception e) {
+            System.out.println("Erro ao cadastrar usuário: " + e.getMessage());
         }
     }
 }

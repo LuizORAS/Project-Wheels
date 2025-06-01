@@ -55,7 +55,7 @@ public class User {
         this.horaAluguel = horaAluguel;
     }
 
-    // Getters e Setters (adicione para todos os novos campos)
+    // Getters usados
     public int getUserID() { return userID; }
     public String getFirstName() { return firstName; }
     public String getLastName() { return lastName; }
@@ -68,33 +68,11 @@ public class User {
     public String getProximaCobranca() { return proximaCobranca; }
     public String getBikeAlugada() { return bikeAlugada; }
     public String getHoraAluguel() { return horaAluguel; }
-
-    public void setFirstName(String firstName) { this.firstName = firstName; }
-    public void setLastName(String lastName) { this.lastName = lastName; }
-    public void setEmail(String email) { this.email = email; }
-    public void setPassword(String password) { this.password = password; }
+    //Setters usados
     public void setPlano(Plan plano) { this.plano = plano; }
-    public void setDataCriacao(String dataCriacao) { this.dataCriacao = dataCriacao; }
     public void setViagensHoje(int viagensHoje) { this.viagensHoje = viagensHoje; }
     public void setMultaAtual(double multaAtual) { this.multaAtual = multaAtual; }
-    public void setProximaCobranca(String proximaCobranca) { this.proximaCobranca = proximaCobranca; }
     public void setBikeAlugada(String bikeAlugada) { this.bikeAlugada = bikeAlugada; }
     public void setHoraAluguel(String horaAluguel) { this.horaAluguel = horaAluguel; }
 
-    @Override
-    public String toString() {
-        return "User{" +
-                "userID=" + userID +
-                ", firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
-                ", email='" + email + '\'' +
-                ", plano='" + plano + '\'' +
-                ", dataCriacao='" + dataCriacao + '\'' +
-                ", viagensHoje=" + viagensHoje +
-                ", multaAtual=" + multaAtual +
-                ", proximaCobranca='" + proximaCobranca + '\'' +
-                ", bikeAlugada='" + bikeAlugada + '\'' +
-                ", horaAluguel='" + horaAluguel + '\'' +
-                '}';
-    }
 }

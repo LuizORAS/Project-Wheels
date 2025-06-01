@@ -1,38 +1,40 @@
 package Wheels;
 
 public class AuthManager {
-    private UserManager userManager;
+    private final ApiClient apiClient;
 
-    public AuthManager(UserManager userManager) {
-        this.userManager = userManager;
+    public AuthManager(ApiClient apiClient) {
+        this.apiClient = apiClient;
     }
 
-    // Autenticação simples: retorna o usuário autenticado, ou null se falhar
+    /**
+     * Realiza login, retornando o usuário autenticado ou null se falhar.
+     */
     public User login(String email, String password) {
-        User u = userManager.getUserByEmail(email);
-        if (u != null && u.getPassword().equals(password)) {
-            return u;
+        try {
+            User user = apiClient.getUserByEmail(email);
+            if (user != null && user.getPassword().equals(password)) {
+                return user;
+            }
+        } catch (Exception e) {
+            System.out.println("Erro ao buscar usuário: " + e.getMessage());
         }
         return null;
     }
 
-    // Cadastro atualizado: retorna true se sucesso, false se email já existe
-    public boolean register(
-            String firstName,
-            String lastName,
-            String email,
-            String password,
-            Plan plano,
-            String dataCriacao,
-            int viagensHoje,
-            double multaAtual,
-            String proximaCobranca,
-            String bikeAlugada,
-            String horaAluguel
-    ) {
-        if (userManager.emailExists(email)) return false;
-        User user = new User(firstName, lastName, email, password, plano, dataCriacao, viagensHoje, multaAtual, proximaCobranca, bikeAlugada, horaAluguel);
-        userManager.addUser(user);
-        return true;
+    /**
+     * Realiza cadastro, retorna true se sucesso, false se email já existe ou erro.
+     */
+    public boolean register(User user) {
+        try {
+            // Verifica se já existe
+            if (apiClient.getUserByEmail(user.getEmail()) != null) {
+                return false;
+            }
+            return apiClient.createUser(user);
+        } catch (Exception e) {
+            System.out.println("Erro ao cadastrar usuário: " + e.getMessage());
+            return false;
+        }
     }
 }
