@@ -6,7 +6,6 @@ import java.util.Scanner;
 public class BikeRentalMenu {
     private final ApiClient apiClient;
     private User user;
-    // O user precisa ser atualizado após operações (aluguel/devolução)
 
     public BikeRentalMenu(ApiClient apiClient, User user) {
         this.apiClient = apiClient;
@@ -15,7 +14,6 @@ public class BikeRentalMenu {
 
     public void show() {
         Scanner scanner = new Scanner(System.in);
-
         System.out.println("\n--- ALUGUEL DE BICICLETA ---");
 
         if (user.getBikeAlugada() != null && !user.getBikeAlugada().isEmpty()) {
@@ -84,19 +82,23 @@ public class BikeRentalMenu {
                     continue;
                 }
 
-                System.out.println("Bicicletas disponíveis:");
-                for (Bike bike : disponiveis) {
-                    System.out.println("ID: " + bike.getId() + " | Tipo: " + bike.getType());
+                Bike bikeSelecionada = disponiveis.get(0);
+                System.out.println("Será selecionada automaticamente a primeira bicicleta disponível:");
+                System.out.println("ID: " + bikeSelecionada.getId() + " | Tipo: " + bikeSelecionada.getType());
+
+                // Solicita senha para confirmação
+                System.out.print("Digite sua senha para confirmar o aluguel: ");
+                String senhaDigitada = scanner.nextLine();
+                if (!user.getPassword().equals(senhaDigitada)) {
+                    System.out.println("Senha incorreta. Operação cancelada.");
+                    return;
                 }
-                System.out.print("Digite o ID da bike que deseja alugar (ou 0 para voltar): ");
-                int idEscolhido = Integer.parseInt(scanner.nextLine());
-                if (idEscolhido == 0) return;
 
                 // Tenta alugar a bike pela API
-                boolean sucesso = apiClient.rentBike(idEscolhido, user.getEmail());
+                boolean sucesso = apiClient.rentBike(bikeSelecionada.getId(), user.getEmail());
                 if (sucesso) {
                     user = apiClient.getUserByEmail(user.getEmail()); // Atualiza estado
-                    System.out.println("Bicicleta " + idEscolhido + " alugada com sucesso!");
+                    System.out.println("Bicicleta " + bikeSelecionada.getId() + " alugada com sucesso!");
                 } else {
                     System.out.println("Não foi possível alugar a bicicleta (indisponível ou erro).");
                 }
@@ -134,7 +136,6 @@ public class BikeRentalMenu {
         }
     }
 
-    // Getter para o user atualizado, se necessário em outros menus
     public User getUser() {
         return user;
     }

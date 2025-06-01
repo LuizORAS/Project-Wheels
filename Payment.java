@@ -1,27 +1,7 @@
 package Wheels;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.time.LocalDateTime;
 import java.util.Scanner;
 
-/**
- * Payment process for plan changes and receipt generation.
- * Agora, integra com a API REST via ApiClient na troca de plano!
- */
 public class Payment {
-
-    private User user;
-    private int paymentId;
-    private static int paymentCount = 1;
-
-    // Constructor (mantido para compatibilidade, se necessário)
-    public Payment(User user) {
-        this.user = user;
-        this.paymentId = paymentCount++;
-    }
 
     /**
      * Processa um pagamento de troca de plano:
@@ -80,30 +60,8 @@ public class Payment {
         }
         user.setPlano(novoPlano);
 
-        // Gera recibo local
-        try {
-            File dir = new File("receipts");
-            if (!dir.exists()) dir.mkdirs();
-            String fileName = "receipts/receipt_" + user.getUserID() + "_" + System.currentTimeMillis() + ".txt";
-            PrintWriter writer = new PrintWriter(new FileWriter(fileName));
-            writer.println("Nome do usuário: " + user.getFirstName() + " " + user.getLastName());
-            writer.println("Plano comprado: " + novoPlano);
-            writer.println("Data da compra: " + LocalDateTime.now());
-            writer.close();
-            System.out.println("Recibo gerado em: " + fileName);
-        } catch (IOException e) {
-            System.out.println("Erro ao gerar recibo: " + e.getMessage());
-        }
-
         System.out.println("Plano alterado com sucesso para " + novoPlano + "!");
         return true;
     }
 
-    // Getters para Payment ID e User (mantidos se necessários)
-    public int getPaymentId() {
-        return paymentId;
-    }
-    public User getUser() {
-        return user;
-    }
 }

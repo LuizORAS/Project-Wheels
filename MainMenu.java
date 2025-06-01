@@ -1,8 +1,6 @@
 package Wheels;
 
 import java.util.*;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 public class MainMenu {
     private final ApiClient apiClient;
@@ -193,113 +191,17 @@ public class MainMenu {
 
     // 6. Alugar bicicleta
     private void alugarBicicleta(Scanner scanner) throws Exception {
-        System.out.println("\n--- Alugar Bicicleta ---");
-
-        // 1. Verifica limite do plano
-        int limite;
-        switch (user.getPlano()) {
-            case FREE:    limite = 1; break;
-            case BASIC:   limite = 2; break;
-            case GOLD:    limite = 4; break;
-            case DIAMOND: limite = 6; break;
-            default:      limite = 1;
-        }
-        if (user.getViagensHoje() >= limite) {
-            System.out.println("Você já atingiu o limite de aluguéis diários do seu plano!");
-            return;
-        }
-
-        // 2. Mostra opções permitidas pelo plano
-        List<BikeType> permitidos = new ArrayList<>();
-        switch (user.getPlano()) {
-            case FREE:
-            case BASIC:
-                permitidos.add(BikeType.BASIC);
-                break;
-            case GOLD:
-                permitidos.add(BikeType.BASIC);
-                permitidos.add(BikeType.COMFORT);
-                break;
-            case DIAMOND:
-                permitidos.add(BikeType.BASIC);
-                permitidos.add(BikeType.COMFORT);
-                permitidos.add(BikeType.ELECTRIC);
-                break;
-        }
-
-        // 3. Mostra quantidade disponível de cada tipo permitido
-        int idx = 1;
-        Map<Integer, BikeType> opcoes = new HashMap<>();
-        System.out.println("Tipos de bicicleta disponíveis para seu plano:");
-        for (BikeType tipo : permitidos) {
-            List<Bike> disponiveis = apiClient.getAvailableBikes(tipo);
-            System.out.println(idx + ". " + tipo + " (disponíveis: " + disponiveis.size() + ")");
-            opcoes.put(idx, tipo);
-            idx++;
-        }
-        System.out.println(idx + ". Voltar ao menu anterior");
-
-        // 4. Solicita escolha do tipo de bike
-        int escolhaTipo;
-        while (true) {
-            System.out.print("Escolha o tipo de bicicleta para alugar: ");
-            String opt = scanner.nextLine();
-            try {
-                escolhaTipo = Integer.parseInt(opt);
-                if (escolhaTipo == idx) {
-                    System.out.println("Voltando ao menu principal...");
-                    return;
-                }
-                if (!opcoes.containsKey(escolhaTipo)) {
-                    System.out.println("Opção inválida!");
-                    continue;
-                }
-                BikeType tipoEscolhido = opcoes.get(escolhaTipo);
-                List<Bike> disponiveis = apiClient.getAvailableBikes(tipoEscolhido);
-
-                if (disponiveis.isEmpty()) {
-                    System.out.println("Não há bicicletas desse tipo disponíveis. Escolha outro tipo.");
-                    continue;
-                }
-                // 5. Realiza aluguel
-                System.out.print("Digite o ID da bike que deseja alugar: ");
-                int idEscolhido = Integer.parseInt(scanner.nextLine());
-                boolean sucesso = apiClient.rentBike(idEscolhido, user.getEmail());
-                if (sucesso) {
-                    // Atualiza dados do usuário localmente pegando o mais recente
-                    user = apiClient.getUserByEmail(user.getEmail());
-                    System.out.println("Bicicleta alugada com sucesso! ID: " + idEscolhido + " (" + tipoEscolhido + ")");
-                    System.out.println("Lembre-se de devolver a bicicleta pelo menu principal.");
-                } else {
-                    System.out.println("Não foi possível alugar a bicicleta. Tente novamente.");
-                }
-                return;
-            } catch (NumberFormatException e) {
-                System.out.println("Opção inválida!");
-            }
-        }
+        BikeRentalMenu rentalMenu = new BikeRentalMenu(apiClient, user);
+        rentalMenu.show();
+        // Atualiza o user local após possíveis mudanças
+        this.user = rentalMenu.getUser();
     }
 
-    // 6. Devolver bicicleta
+    // 7. Devolver bicicleta
     private void devolverBicicleta(Scanner scanner) throws Exception {
-        System.out.println("\n--- Devolver Bicicleta ---");
-        String bikeIdStr = user.getBikeAlugada();
-        if (bikeIdStr == null || bikeIdStr.isEmpty()) {
-            System.out.println("Você não possui bicicleta alugada.");
-            return;
-        }
-        int bikeId = Integer.parseInt(bikeIdStr);
-
-        boolean sucesso = apiClient.returnBike(bikeId, user.getEmail());
-        if (sucesso) {
-            // Atualiza dados do usuário localmente pegando o mais recente
-            user = apiClient.getUserByEmail(user.getEmail());
-            System.out.println("Bicicleta devolvida com sucesso!");
-            if (user.getMultaAtual() > 0) {
-                System.out.printf("Atenção: Você possui multa acumulada de R$ %.2f\n", user.getMultaAtual());
-            }
-        } else {
-            System.out.println("Erro ao devolver bicicleta.");
-        }
+        BikeRentalMenu rentalMenu = new BikeRentalMenu(apiClient, user);
+        rentalMenu.show();
+        // Atualiza o user local após possíveis mudanças
+        this.user = rentalMenu.getUser();
     }
 }
