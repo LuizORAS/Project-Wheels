@@ -70,16 +70,6 @@ public class ApiClient {
         return response.statusCode() == 200 || response.statusCode() == 204;
     }
 
-    public double getUserMulta(String email) throws IOException, InterruptedException {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + "/users/" + email + "/multa"))
-                .GET()
-                .build();
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() == 404) return 0.0;
-        return Double.parseDouble(response.body());
-    }
-
     // ---- BIKES ----
 
     public boolean createBike(Bike bike) throws IOException, InterruptedException {

@@ -37,4 +37,7 @@ public class AuthManager {
             return false;
         }
     }
+    public ApiClient getApiClient() {
+        return apiClient;
+    }
 }

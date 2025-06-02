@@ -5,10 +5,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 public class AuthMenu {
-    private final ApiClient apiClient;
+    private final AuthManager authManager;
 
-    public AuthMenu(ApiClient apiClient) {
-        this.apiClient = apiClient;
+    public AuthMenu(AuthManager authManager) {
+        this.authManager = authManager;
     }
 
     public void show() {
@@ -26,7 +26,7 @@ public class AuthMenu {
                 case "1":
                     User user = login(scanner);
                     if (user != null) {
-                        MainMenu mainMenu = new MainMenu(apiClient, user);
+                        MainMenu mainMenu = new MainMenu(authManager.getApiClient(), user);
                         mainMenu.show();
                     }
                     break;
@@ -48,17 +48,12 @@ public class AuthMenu {
         System.out.print("Senha: ");
         String senha = scanner.nextLine();
 
-        try {
-            User user = apiClient.getUserByEmail(email);
-            if (user != null && user.getPassword().equals(senha)) {
-                System.out.println("Login realizado com sucesso!");
-                return user;
-            } else {
-                System.out.println("Login ou senha incorretos. Tente novamente.");
-                return null;
-            }
-        } catch (Exception e) {
-            System.out.println("Erro ao tentar logar: " + e.getMessage());
+        User user = authManager.login(email, senha);
+        if (user != null) {
+            System.out.println("Login realizado com sucesso!");
+            return user;
+        } else {
+            System.out.println("Login ou senha incorretos. Tente novamente.");
             return null;
         }
     }
@@ -71,15 +66,7 @@ public class AuthMenu {
         System.out.print("Login (e-mail): ");
         String email = scanner.nextLine().trim();
 
-        try {
-            if (apiClient.getUserByEmail(email) != null) {
-                System.out.println("Já existe um usuário com esse e-mail. Tente outro.");
-                return;
-            }
-        } catch (Exception e) {
-            // Se for erro 404, não encontrou, pode prosseguir
-        }
-
+        // Não precisa consultar apiClient direto! AuthManager faz isso na register()
         System.out.print("Senha: ");
         String senha = scanner.nextLine();
 
@@ -96,15 +83,11 @@ public class AuthMenu {
 
         User novoUser = new User(0, nome, sobrenome, email, senha, plano, dataCriacaoStr, viagensHoje, multaAtual, proximaCobrancaStr, bikeAlugada, horaAluguel);
 
-        try {
-            boolean registrado = apiClient.createUser(novoUser);
-            if (registrado) {
-                System.out.println("Cadastro realizado com sucesso! Agora faça login.");
-            } else {
-                System.out.println("Erro ao cadastrar usuário. Tente novamente.");
-            }
-        } catch (Exception e) {
-            System.out.println("Erro ao cadastrar usuário: " + e.getMessage());
+        boolean registrado = authManager.register(novoUser);
+        if (registrado) {
+            System.out.println("Cadastro realizado com sucesso! Agora faça login.");
+        } else {
+            System.out.println("Erro ao cadastrar usuário. O e-mail pode já estar em uso ou ocorreu outro erro.");
         }
     }
 }
