@@ -13,7 +13,7 @@ public class MainMenu {
 
     public void show() {
         Scanner scanner = new Scanner(System.in);
-
+        BikeSeeder.seed();
         while (true) {
             System.out.println("\n===== MENU PRINCIPAL =====");
             System.out.println("1. Consultar plano atual");

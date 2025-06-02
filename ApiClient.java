@@ -8,7 +8,7 @@ import java.net.http.*;
 import java.util.List;
 
 public class ApiClient {
-    private static final String BASE_URL = "http://localhost:8080";
+    private static final String BASE_URL = "https://project-wheels-api.onrender.com";
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
 
@@ -82,14 +82,17 @@ public class ApiClient {
 
     // ---- BIKES ----
 
-    public List<Bike> getAllBikes() throws IOException, InterruptedException {
+    public boolean createBike(Bike bike) throws IOException, InterruptedException {
+        String json = objectMapper.writeValueAsString(bike);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + "/bikes"))
-                .GET()
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json))
                 .build();
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        return objectMapper.readValue(response.body(), new TypeReference<List<Bike>>() {});
+        HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
+        return response.statusCode() == 200 || response.statusCode() == 201;
     }
+
     public List<Bike> getAvailableBikes(BikeType type) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + "/bikes/available?type=" + type.name()))
