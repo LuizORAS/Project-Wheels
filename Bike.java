@@ -19,14 +19,6 @@ public class Bike {
         return type;
     }
 
-    public boolean isAvailable() {
-        return available;
-    }
-
-    public void setAvailable(boolean available) {
-        this.available = available;
-    }
-
     @Override
     public String toString() {
         return "Bike{" +

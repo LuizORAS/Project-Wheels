@@ -16,16 +16,17 @@ public class User {
     private String horaAluguel;
 
     public User() {}
+
     // Construtor para novo usuário
     public User(String firstName, String lastName, String email, String password,
                 Plan plano, String dataCriacao, int viagensHoje, double multaAtual,
                 String proximaCobranca, String bikeAlugada, String horaAluguel) {
+
         this.userID = 0;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.password = password;
-
         this.plano = plano;
         this.dataCriacao = dataCriacao;
         this.viagensHoje = viagensHoje;
@@ -39,12 +40,12 @@ public class User {
     public User(int userID, String firstName, String lastName, String email, String password,
                 Plan plano, String dataCriacao, int viagensHoje, double multaAtual,
                 String proximaCobranca, String bikeAlugada, String horaAluguel) {
+
         this.userID = userID;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
         this.password = password;
-
         this.plano = plano;
         this.dataCriacao = dataCriacao;
         this.viagensHoje = viagensHoje;
@@ -67,11 +68,8 @@ public class User {
     public String getProximaCobranca() { return proximaCobranca; }
     public String getBikeAlugada() { return bikeAlugada; }
     public String getHoraAluguel() { return horaAluguel; }
-    //Setters usados
+
+    // Setter usado
     public void setPlano(Plan plano) { this.plano = plano; }
-    public void setViagensHoje(int viagensHoje) { this.viagensHoje = viagensHoje; }
-    public void setMultaAtual(double multaAtual) { this.multaAtual = multaAtual; }
-    public void setBikeAlugada(String bikeAlugada) { this.bikeAlugada = bikeAlugada; }
-    public void setHoraAluguel(String horaAluguel) { this.horaAluguel = horaAluguel; }
 
 }

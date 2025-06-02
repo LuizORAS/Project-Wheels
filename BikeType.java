@@ -11,6 +11,7 @@ public enum BikeType {
         this.finePer3Minutes = finePer3Minutes;
     }
 
+    //tá aqui, pois foi criada aqui primeiro, depois copiada para entity na API e é usada lá
     public double calculateFine(int exceededMinutes) {
         int blocksOf3Minutes = exceededMinutes / 3;
         return blocksOf3Minutes * finePer3Minutes;
