@@ -25,7 +25,7 @@ public class ApiClient {
                 .GET()
                 .build();
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() == 404) return null;
+        if (response.statusCode() == 404 || response.body() == null || response.body().isBlank()) return null;
         return objectMapper.readValue(response.body(), User.class);
     }
 
