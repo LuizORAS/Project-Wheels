@@ -18,7 +18,7 @@ public class ApiClient {
     }
 
     // ---- USERS ----
-
+    //Adding
     public User getUserByEmail(String email) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + "/users/" + email))
